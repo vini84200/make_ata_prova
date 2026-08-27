@@ -90,9 +90,21 @@ fn post_process(application: &ExamApplication) -> anyhow::Result<()> {
         generate_pdf_from_template(application)?;
     }
 
-    if Confirm::new("Gerar cronograma da aplicação para o OnTime (JSON)?")
-        .with_default(false)
-        .prompt()?
+    if Confirm::new(
+        "Gerar planilha (.xlsx) do cronograma, importável no OnTime (Rundown > Import > Import from spreadsheet)?",
+    )
+    .with_default(false)
+    .prompt()?
+    {
+        ontime::write_rundown_spreadsheet(application, "cronograma_ontime.xlsx")?;
+        println!("Cronograma salvo em cronograma_ontime.xlsx");
+    }
+
+    if Confirm::new(
+        "Gerar cronograma em JSON, para uso direto na ferramenta MCP ontime_batch_create_entries do OnTime?",
+    )
+    .with_default(false)
+    .prompt()?
     {
         generate_ontime_schedule(application)?;
     }
@@ -124,7 +136,7 @@ fn generate_ontime_schedule(application: &ExamApplication) -> anyhow::Result<()>
     std::fs::write("cronograma_ontime.json", &json)?;
     println!("Cronograma salvo em cronograma_ontime.json");
     println!(
-        "Use o conteúdo como `entries` na chamada da ferramenta MCP ontime_batch_create_entries do OnTime."
+        "Este arquivo NÃO é um projeto do OnTime — é só o array `entries` para a ferramenta MCP ontime_batch_create_entries. Para importar direto pela interface do OnTime, use a planilha .xlsx."
     );
     Ok(())
 }

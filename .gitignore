@@ -12,6 +12,7 @@
 # Dados de aplicações de prova (contêm nome, e-mail e matrícula de alunos)
 /*.json
 !/.release-it.json
+/cronograma_ontime.xlsx
 
 # release-it e seus plugins são usados via npx (scripts/release.sh), sem
 # package.json no repositório; isto só existe se alguém rodar `npm install`
