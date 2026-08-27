@@ -1,0 +1,320 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1.8cm]{geometry}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage[sfdefault]{atkinson}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{titlesec}
+
+\titleformat{\section}  % which section command to format
+  {\fontsize{12}{12}\bfseries} % format for whole line
+  {\thesection} % how to show number
+  {1em} % space between number and text
+  {} % formatting for just the text
+  [] % formatting for after the text
+
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.4}
+
+% ---------- Campos de preenchimento ----------
+
+\newcommand{\digitbox}{
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+}
+
+\newcommand{\twodigits}{
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+}
+
+\newcommand{\threedigits}{
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
+    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+}
+
+\newcommand{\timefield}{
+    \twodigits {\Large\textbf{:}} \twodigits
+}
+
+\newcommand{\datefield}{
+    \twodigits {\Large\textbf{/}} \twodigits {\Large\textbf{/}} \threedigits
+}
+
+\newcommand{\dotted}[1]{
+    \makebox[#1]{\dotfill}
+}
+
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{ATA DE APLICAÇÃO DE PROVA}}
+\fancyhead[R]{UFRGS}
+\fancyfoot[R]{Folha \thepage \ de \pageref{LastPage}}
+
+\begin{document}
+
+\begin{center}
+    {\Large\bfseries Aplicação de Prova}
+\end{center}
+
+% ====================================================
+% IDENTIFICAÇÃO
+% ====================================================
+
+\begin{tabularx}{\textwidth}{lXlX}
+\textbf{Atividade de Ensino}
+    & \multicolumn{3}{l}{ {{ exam.course }} } \\
+
+\textbf{Período Letivo}
+    & \multicolumn{3}{l}{ {{ exam.semester }} } \\
+
+\textbf{Professor Responsável}
+    & \multicolumn{3}{l}{ {{ exam.professor }} } \\
+
+\textbf{Turma(s)}
+    & \multicolumn{3}{l}{ {{ exam.classes }} } \\
+
+\textbf{Avaliação}
+    & {{ exam.exam_name }}
+&
+\textbf{Aplicação}
+    & {{ exam.application_type }} \\
+
+\textbf{Data}
+    & \multicolumn{3}{l}{ {{ exam.date_br() }} } \\
+
+\textbf{Horário Previsto}
+    & \multicolumn{3}{l}{
+        {{ exam.schedule.scheduled_start_br() }}
+        --- {{ exam.schedule.scheduled_end_br() }}
+        ({{ exam.schedule.duration_minutes }} minutos)
+    } \\
+
+\textbf{Sala}
+    & \multicolumn{3}{l}{ {{ exam.room }} } \\
+\end{tabularx}
+
+% ====================================================
+% PRESENÇA
+% ====================================================
+
+\section*{Registro de Presença}
+
+ {
+  \small Marque somente os alunos presentes com \textbf{P}
+  e os ausentes com \textbf{A} na coluna de presença no ínicio da aplicação.
+  Os alunos que chegarem após o início da aplicação devem ser marcados com \textbf{T} (tarde).
+
+  Os alunos devem assinar na coluna de assinatura no ato da devolução da prova.
+ }
+
+
+\begin{longtable}{cp{6.5cm}cp{7.5cm}}
+
+\textbf{Nº}
+&
+\textbf{Nome}
+&
+\textbf{Presença}
+&
+\textbf{Assinatura}
+\\[0.4em]
+
+\hline
+\\[-0.8em]
+
+{% for student in exam.students %}
+{{ student.number }}
+&
+{{ student.name }}
+&
+$\digitbox$
+&
+\makebox[7cm]{\dotfill}
+{% if student.observations.is_some() %}
+\\[0.1em]
+&
+\multicolumn{3}{p{14cm}}{
+    \small\textit{Observações: {{ student.observations.as_ref().unwrap() }}}
+}
+{% endif %}
+\\[0.3em]
+{% endfor %}
+
+\hline
+
+\end{longtable}
+
+\newpage
+
+\section*{Horários}
+
+\begin{tabularx}{\textwidth}{lrlr}
+
+Horário previsto de início:
+&
+{\Large\textbf{ {{ exam.schedule.scheduled_start_br() }} }}
+&
+Horário real de início:
+&
+\timefield
+\\
+
+Tempo de prova:
+&
+{\Large\textbf{ {{ exam.schedule.duration_minutes }} minutos }}
+&
+&
+\\
+
+Horário limite previsto:
+&
+{\Large\textbf{ {{ exam.schedule.scheduled_end_br() }} }}
+&
+Horário limite calculado:
+&
+\timefield
+\\
+
+&
+&
+Horário real de término:
+&
+\timefield
+
+\end{tabularx}
+
+% ====================================================
+% SAÍDAS TEMPORÁRIAS
+% ====================================================
+
+\section*{Registro de Saídas Temporárias}
+
+\begin{tabularx}{\textwidth}{XccX}
+
+Nº Aluno &
+Saída &
+Retorno &
+Rubrica do Fiscal \\
+
+\hline
+
+\\[-0.8em]
+
+{% for _ in 0..exam.exit_rows %}
+\dotted{4.5cm}
+&
+\timefield
+&
+\timefield
+&
+\dotted{5.5cm}
+\\
+{% endfor %}
+
+\hline
+\end{tabularx}
+
+% ====================================================
+% OCORRÊNCIAS
+% ====================================================
+
+\section*{Ocorrências}
+
+\bigskip
+
+\hrule
+
+\vspace{1.2cm}
+
+\hrule
+
+\vspace{1.2cm}
+
+\hrule
+
+\vspace{1.2cm}
+
+\hrule
+
+\vspace{1.2cm}
+
+\hrule
+
+\vspace{0.2cm}
+
+% ====================================================
+% ENCERRAMENTO
+% ====================================================
+
+\section*{Encerramento}
+\begin{multicols}{2}
+    \begin{tabularx}{\textwidth}{lX}
+        Total de presentes:         &
+        \twodigits
+        \\[0.2cm]
+
+        Total de ausentes:          &
+        \twodigits
+        \\[0.2cm]
+
+        Provas recolhidas:          &
+        \threedigits
+        \\[0.2cm]
+
+        Folhas extras distribuídas: &
+        \twodigits
+        \\[0.2cm]
+
+        Folhas extras recolhidas:   &
+        \twodigits
+    \end{tabularx}
+
+    \textbf{
+        Conferência final:
+    }
+
+    \vspace{0.2cm}
+
+    \digitbox Quantidade de provas recolhidas confere com presentes
+    \vspace{0.2cm}
+
+    \digitbox Todas as folhas extras foram recolhidas
+    \vspace{0.2cm}
+
+    \digitbox Não houve irregularidades
+    \vspace{0.2cm}
+
+    \digitbox Houve irregularidades registradas na seção de ocorrências
+    \vspace{0.2cm}
+
+    \vspace{2cm}
+\end{multicols}
+
+% ====================================================
+% ASSINATURAS
+% ====================================================
+
+
+
+\begin{minipage}{0.95\textwidth}
+    \centering
+
+    \vspace{0.8cm}
+
+    \rule{7cm}{0.4pt}
+
+    Aplicador
+\end{minipage}
+\hfill
+
+\end{document}
