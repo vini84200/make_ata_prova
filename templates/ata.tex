@@ -13,6 +13,7 @@
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \usepackage{titlesec}
+\usepackage{booktabs}
 
 \titleformat{\section}  % which section command to format
   {\fontsize{12}{12}\bfseries} % format for whole line
@@ -53,12 +54,19 @@
     \makebox[#1]{\dotfill}
 }
 
+% Linha numerada para anotação livre (usada em "Ocorrências").
+\newcommand{\notedline}[1]{
+    \noindent{\bfseries #1.}\ \rule[-0.1cm]{0.9\textwidth}{0.4pt}\par
+    \vspace{0.9cm}
+}
 
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\textbf{ATA DE APLICAÇÃO DE PROVA}}
 \fancyhead[R]{UFRGS}
+\fancyfoot[L]{\small Gerado em {{ generated_at }}}
 \fancyfoot[R]{Folha \thepage \ de \pageref{LastPage}}
+\renewcommand{\footrulewidth}{0.4pt}
 
 \begin{document}
 
@@ -74,11 +82,21 @@
 \textbf{Atividade de Ensino}
     & \multicolumn{3}{l}{ {{ exam.course }} } \\
 
+{% if exam.features.course_code.is_some() %}
+\textbf{Código}
+    & \multicolumn{3}{l}{ {{ exam.features.course_code.as_ref().unwrap() }} } \\
+{% endif %}
+
 \textbf{Período Letivo}
     & \multicolumn{3}{l}{ {{ exam.semester }} } \\
 
 \textbf{Professor Responsável}
     & \multicolumn{3}{l}{ {{ exam.professor }} } \\
+
+{% if exam.features.department.is_some() %}
+\textbf{Instituto/Departamento}
+    & \multicolumn{3}{l}{ {{ exam.features.department.as_ref().unwrap() }} } \\
+{% endif %}
 
 \textbf{Turma(s)}
     & \multicolumn{3}{l}{ {{ exam.classes }} } \\
@@ -101,6 +119,11 @@
 
 \textbf{Sala}
     & \multicolumn{3}{l}{ {{ exam.room }} } \\
+
+{% if exam.features.allowed_materials.is_some() %}
+\textbf{Materiais Permitidos}
+    & \multicolumn{3}{l}{ {{ exam.features.allowed_materials.as_ref().unwrap() }} } \\
+{% endif %}
 \end{tabularx}
 
 % ====================================================
@@ -109,52 +132,70 @@
 
 \section*{Registro de Presença}
 
- {
-  \small Marque somente os alunos presentes com \textbf{P}
-  e os ausentes com \textbf{A} na coluna de presença no ínicio da aplicação.
-  Os alunos que chegarem após o início da aplicação devem ser marcados com \textbf{T} (tarde).
+\noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
+    \small
+    Marque somente os alunos presentes com \textbf{P} e os ausentes com \textbf{A} na
+    coluna de presença no início da aplicação. Os alunos que chegarem após o início da
+    aplicação devem ser marcados com \textbf{T} (tarde).
+    \par\smallskip
+    Os alunos devem assinar na coluna de assinatura no ato da devolução da prova.
+}}
 
-  Os alunos devem assinar na coluna de assinatura no ato da devolução da prova.
- }
+\medskip
 
+\begin{longtable}{ {{ exam.features.presence_table_colspec()|safe }} }
 
-\begin{longtable}{cp{6.5cm}cp{7.5cm}}
+\toprule
+\textbf{Nº} & \textbf{Matrícula} & \textbf{Nome}{% if exam.features.show_class_column %} & \textbf{Turma}{% endif %} & \textbf{Presença} & \textbf{Assinatura}{% if exam.features.show_delivery_time_column %} & \textbf{Entrega}{% endif %} \\
+\midrule
+\endfirsthead
 
-\textbf{Nº}
-&
-\textbf{Nome}
-&
-\textbf{Presença}
-&
-\textbf{Assinatura}
-\\[0.4em]
+\multicolumn{ {{ exam.features.observation_span() + 1 }} }{l}{\small\textit{(continuação da lista de presença)}} \\[0.3em]
+\toprule
+\textbf{Nº} & \textbf{Matrícula} & \textbf{Nome}{% if exam.features.show_class_column %} & \textbf{Turma}{% endif %} & \textbf{Presença} & \textbf{Assinatura}{% if exam.features.show_delivery_time_column %} & \textbf{Entrega}{% endif %} \\
+\midrule
+\endhead
 
-\hline
-\\[-0.8em]
+\midrule
+\multicolumn{ {{ exam.features.observation_span() + 1 }} }{r}{\small\textit{continua na próxima página\ldots}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
 
 {% for student in exam.students %}
 {{ student.number }}
 &
+{{ student.id }}
+&
 {{ student.name }}
+{% if exam.features.show_class_column %}
+&
+{{ student.class }}
+{% endif %}
 &
 $\digitbox$
 &
-\makebox[7cm]{\dotfill}
+\dotted{\linewidth}
+{% if exam.features.show_delivery_time_column %}
+&
+\dotted{\linewidth}
+{% endif %}
 {% if student.observations.is_some() %}
 \\[0.1em]
 &
-\multicolumn{3}{p{14cm}}{
+\multicolumn{ {{ exam.features.observation_span() }} }{p{14cm}}{
     \small\textit{Observações: {{ student.observations.as_ref().unwrap() }}}
 }
 {% endif %}
 \\[0.3em]
 {% endfor %}
 
-\hline
-
 \end{longtable}
 
-\newpage
+% ====================================================
+% HORÁRIOS
+% ====================================================
 
 \section*{Horários}
 
@@ -201,14 +242,12 @@ Horário real de término:
 
 \begin{tabularx}{\textwidth}{XccX}
 
+\toprule
 Nº Aluno &
 Saída &
 Retorno &
 Rubrica do Fiscal \\
-
-\hline
-
-\\[-0.8em]
+\midrule
 
 {% for _ in 0..exam.exit_rows %}
 \dotted{4.5cm}
@@ -221,7 +260,7 @@ Rubrica do Fiscal \\
 \\
 {% endfor %}
 
-\hline
+\bottomrule
 \end{tabularx}
 
 % ====================================================
@@ -230,33 +269,28 @@ Rubrica do Fiscal \\
 
 \section*{Ocorrências}
 
+\small\textit{Descreva abaixo qualquer ocorrência relevante durante a aplicação (fraude,
+mal-estar, atraso, saída antecipada etc.), indicando horário e aluno(s) envolvido(s),
+quando aplicável.}
+
 \bigskip
 
-\hrule
-
-\vspace{1.2cm}
-
-\hrule
-
-\vspace{1.2cm}
-
-\hrule
-
-\vspace{1.2cm}
-
-\hrule
-
-\vspace{1.2cm}
-
-\hrule
-
-\vspace{0.2cm}
+\begin{minipage}{\textwidth}
+\notedline{1}
+\notedline{2}
+\notedline{3}
+\notedline{4}
+\notedline{5}
+\end{minipage}
 
 % ====================================================
 % ENCERRAMENTO
 % ====================================================
 
 \section*{Encerramento}
+
+Total de alunos matriculados na lista de presença: \textbf{ {{ exam.students.len() }} }
+
 \begin{multicols}{2}
     \begin{tabularx}{\textwidth}{lX}
         Total de presentes:         &
@@ -304,17 +338,46 @@ Rubrica do Fiscal \\
 % ASSINATURAS
 % ====================================================
 
+{% if exam.features.closing_city.is_some() %}
+\begin{center}
+    {{ exam.features.closing_city.as_ref().unwrap() }}, {{ exam.date_extenso() }}.
+\end{center}
+{% endif %}
 
+{% if exam.features.second_proctor %}
+\begin{center}
+    \begin{minipage}{0.45\textwidth}
+        \centering
 
-\begin{minipage}{0.95\textwidth}
-    \centering
+        \vspace{0.8cm}
 
-    \vspace{0.8cm}
+        \rule{6cm}{0.4pt}\\[0.15cm]
+        Fiscal Titular\\[0.15cm]
+        {\small Nome legível: \dotted{4.5cm}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
 
-    \rule{7cm}{0.4pt}
+        \vspace{0.8cm}
 
-    Aplicador
-\end{minipage}
-\hfill
+        \rule{6cm}{0.4pt}\\[0.15cm]
+        Fiscal Auxiliar\\[0.15cm]
+        {\small Nome legível: \dotted{4.5cm}}
+    \end{minipage}
+\end{center}
+{% else %}
+\begin{center}
+    \begin{minipage}{0.6\textwidth}
+        \centering
+
+        \vspace{0.8cm}
+
+        \rule{7cm}{0.4pt}\\[0.15cm]
+        Aplicador\\[0.15cm]
+        {\small Nome legível: \dotted{5cm}}
+    \end{minipage}
+\end{center}
+{% endif %}
 
 \end{document}

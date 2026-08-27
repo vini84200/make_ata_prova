@@ -113,7 +113,10 @@ fn post_process(application: &ExamApplication) -> anyhow::Result<()> {
 }
 
 fn generate_pdf_from_template(application: &ExamApplication) -> Result<(), anyhow::Error> {
-    let template = template::AtaTemplate { exam: application };
+    let template = template::AtaTemplate {
+        exam: application,
+        generated_at: chrono::Local::now().format("%d/%m/%Y %H:%M").to_string(),
+    };
     let latex = template.render()?;
     std::fs::write("ata.tex", latex.clone())?;
     println!("LaTeX file generated: ata.tex");

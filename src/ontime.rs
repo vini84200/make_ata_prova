@@ -196,6 +196,7 @@ mod tests {
             room: "Sala 100 - Prédio 43".to_string(),
             students: Vec::<Student>::new(),
             exit_rows: 2,
+            features: Default::default(),
         }
     }
 
