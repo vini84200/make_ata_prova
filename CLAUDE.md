@@ -31,3 +31,16 @@ The binary is interactive (menu-driven via `inquire`), not scriptable with flags
 3. `main::generate_pdf_from_template` renders `templates/ata.tex` through Askama (escaping via `latex::Tex`) into `ata.tex`, then compiles that to `ata.pdf` via `tectonic`.
 
 Generated `ata.tex`/`ata.pdf` and any application JSON files are gitignored — they're per-run output and carry real student data (name, email, ID), not source.
+
+## Releases
+
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, …) — `feat`/`fix` drive the version bump and `CHANGELOG.md` entries.
+
+Releasing (tag, changelog, commit) goes through [release-it](https://github.com/release-it/release-it), run via `scripts/release.sh` (a thin `npx` wrapper — no `package.json`/lockfile in this repo). Configuration is in `.release-it.json`:
+
+- `@release-it/conventional-changelog` reads commit history since the last `v*` tag to pick the next version and update `CHANGELOG.md`.
+- `@release-it/bumper` reads/writes the version straight from `Cargo.toml` (`[package].version`) — there is no `package.json`; Cargo.toml is the single source of truth for the version.
+- The `after:bump` hook runs `cargo check` so `Cargo.lock` picks up the new version before the release commit.
+- `npm` publishing and GitHub releases are both disabled (`"npm": false`, `"github.release": false`) — this only manages git tags/commits/changelog locally. Enable `github.release` (and set `GITHUB_TOKEN`) once the repo has a GitHub remote, if desired.
+
+Preview a release without changing anything: `scripts/release.sh --dry-run`.
