@@ -8,6 +8,7 @@ use crate::template::ExamApplication;
 use crate::tui::{create_exam_application, edit_exam_application};
 
 mod latex;
+mod ontime;
 mod template;
 mod tui;
 
@@ -52,12 +53,8 @@ fn main() -> anyhow::Result<()> {
                 std::fs::write(json_path.clone(), json_data)?;
                 println!("Dados da aplicação de prova salvos em {}", json_path);
             }
-            if Confirm::new("Gerar pdf de ata de prova com os dados informados?")
-                .with_default(true)
-                .prompt()?
-            {
-                generate_pdf_from_template(application)?;
-            }
+
+            post_process(&application)?;
         }
         Action::OpenAta => {
             let json_path = Text::new("Caminho do arquivo JSON da aplicação de prova:")
@@ -74,12 +71,7 @@ fn main() -> anyhow::Result<()> {
                 edit_exam_application(&mut application)?;
             }
 
-            if Confirm::new("Gerar pdf de ata de prova com os dados informados?")
-                .with_default(true)
-                .prompt()?
-            {
-                generate_pdf_from_template(application)?;
-            }
+            post_process(&application)?;
         }
         Action::Exit => {
             println!("Saindo...");
@@ -90,8 +82,26 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn generate_pdf_from_template(application: ExamApplication) -> Result<(), anyhow::Error> {
-    let template = template::AtaTemplate { exam: &application };
+fn post_process(application: &ExamApplication) -> anyhow::Result<()> {
+    if Confirm::new("Gerar pdf de ata de prova com os dados informados?")
+        .with_default(true)
+        .prompt()?
+    {
+        generate_pdf_from_template(application)?;
+    }
+
+    if Confirm::new("Gerar cronograma da aplicação para o OnTime (JSON)?")
+        .with_default(false)
+        .prompt()?
+    {
+        generate_ontime_schedule(application)?;
+    }
+
+    Ok(())
+}
+
+fn generate_pdf_from_template(application: &ExamApplication) -> Result<(), anyhow::Error> {
+    let template = template::AtaTemplate { exam: application };
     let latex = template.render()?;
     std::fs::write("ata.tex", latex.clone())?;
     println!("LaTeX file generated: ata.tex");
@@ -106,6 +116,16 @@ fn generate_pdf_from_template(application: ExamApplication) -> Result<(), anyhow
     println!("PDF saved as ata.pdf");
     println!("Opening PDF...");
     open_pdf("ata.pdf");
+    Ok(())
+}
+
+fn generate_ontime_schedule(application: &ExamApplication) -> anyhow::Result<()> {
+    let json = ontime::rundown_entries_json(application)?;
+    std::fs::write("cronograma_ontime.json", &json)?;
+    println!("Cronograma salvo em cronograma_ontime.json");
+    println!(
+        "Use o conteúdo como `entries` na chamada da ferramenta MCP ontime_batch_create_entries do OnTime."
+    );
     Ok(())
 }
 
