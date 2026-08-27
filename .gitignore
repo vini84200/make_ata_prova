@@ -1,0 +1,14 @@
+/target
+
+# Artefatos de compilação do LaTeX/tectonic
+/ata.tex
+/ata.pdf
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+
+# Dados de aplicações de prova (contêm nome, e-mail e matrícula de alunos)
+/*.json
+
