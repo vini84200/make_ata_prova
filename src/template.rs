@@ -61,3 +61,67 @@ impl ExamApplication {
 pub struct AtaTemplate<'a> {
     pub exam: &'a ExamApplication,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_application() -> ExamApplication {
+        ExamApplication {
+            course: "Introdução à Programação".to_string(),
+            semester: "2026/2".to_string(),
+            professor: "Ada Lovelace".to_string(),
+            classes: "A".to_string(),
+            exam_name: "1ª Avaliação".to_string(),
+            application_type: "Regular".to_string(),
+            date: NaiveDate::from_ymd_opt(2026, 8, 27).unwrap(),
+            schedule: Schedule {
+                scheduled_start: NaiveTime::from_hms_opt(18, 30, 0).unwrap(),
+                scheduled_end: NaiveTime::from_hms_opt(20, 10, 0).unwrap(),
+                duration_minutes: 100,
+            },
+            room: "Sala 100 - Prédio 43".to_string(),
+            students: vec![Student {
+                id: 1,
+                number: 1,
+                name: "Maria & Souza_1".to_string(),
+                class: "A".to_string(),
+                email: "maria@example.com".to_string(),
+                observations: Some("50% de presença".to_string()),
+            }],
+            exit_rows: 2,
+        }
+    }
+
+    #[test]
+    fn date_and_time_render_in_brazilian_format() {
+        let exam = sample_application();
+        assert_eq!(exam.date_br(), "27/08/2026");
+        assert_eq!(exam.schedule.scheduled_start_br(), "18:30");
+        assert_eq!(exam.schedule.scheduled_end_br(), "20:10");
+    }
+
+    /// Compiles the rendered template with the real tectonic engine. Marked
+    /// `#[ignore]` because it downloads/uses the tectonic bundle and is slow;
+    /// run explicitly with `cargo test -- --ignored` after touching
+    /// `templates/ata.tex`.
+    #[test]
+    #[ignore]
+    fn renders_to_a_valid_pdf() {
+        let exam = sample_application();
+        let latex = AtaTemplate { exam: &exam }.render().unwrap();
+        let pdf = tectonic::latex_to_pdf(&latex).expect("ata.tex should compile to PDF");
+        assert!(pdf.starts_with(b"%PDF"));
+    }
+
+    #[test]
+    fn renders_and_escapes_student_data() {
+        let exam = sample_application();
+        let rendered = AtaTemplate { exam: &exam }.render().unwrap();
+
+        assert!(rendered.contains("27/08/2026"));
+        assert!(rendered.contains(r"Maria \& Souza\_1"));
+        assert!(rendered.contains(r"50\% de presença"));
+        assert!(rendered.matches(r"\section*{Horários}").count() == 1);
+    }
+}
