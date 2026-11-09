@@ -56,7 +56,12 @@ impl AtaFeatures {
     /// hand-tuned per combination so the row always fits within the page's
     /// text width; the dotted signature fill itself is sized with
     /// `\linewidth` in the template, so it always matches whatever width is
-    /// picked here.
+    /// picked here. Every column except Nome renders at `\footnotesize` —
+    /// Nome (the student's name) is the one thing in this table that's
+    /// actually essential to read at a glance; shrinking everything else
+    /// (Nº, Matrícula, Turma, Presença, Assinatura, Entrega) both signals
+    /// that and keeps their header words from wrapping inside their narrow
+    /// fixed widths.
     pub fn presence_table_colspec(&self) -> String {
         let (name_width, signature_width) =
             match (self.show_class_column, self.show_delivery_time_column) {
@@ -66,23 +71,22 @@ impl AtaFeatures {
                 (true, true) => (3.8, 3.9),
             };
 
-        let mut spec = String::from(r"c>{\centering\arraybackslash}p{1.5cm}");
+        let mut spec = String::from(r">{\footnotesize}c>{\footnotesize\centering\arraybackslash}p{1.5cm}");
         spec.push_str(&format!("p{{{name_width}cm}}"));
         if self.show_class_column {
-            spec.push_str(r">{\centering\arraybackslash}p{1.1cm}");
+            spec.push_str(r">{\footnotesize\centering\arraybackslash}p{1.1cm}");
         }
-        spec.push('c');
-        spec.push_str(&format!("p{{{signature_width}cm}}"));
+        spec.push_str(r">{\footnotesize}c");
+        spec.push_str(&format!(">{{\\footnotesize}}p{{{signature_width}cm}}"));
         if self.show_delivery_time_column {
-            spec.push_str(r">{\centering\arraybackslash}p{1.4cm}");
+            spec.push_str(r">{\footnotesize\centering\arraybackslash}p{1.4cm}");
         }
         spec
     }
 
-    /// How many table columns the "Observações" note under a student row
-    /// should span: Matrícula, Nome, Presença, Assinatura, plus any enabled
-    /// extra columns — i.e. every column except Nº.
-    pub fn observation_span(&self) -> usize {
+    /// Total presence-table columns minus Nº — used to span the whole row
+    /// width for the "(continuação)"/"continua na próxima página" notices.
+    pub fn columns_after_number(&self) -> usize {
         4 + self.extra_presence_columns()
     }
 }
@@ -250,7 +254,7 @@ mod tests {
         let mut exam = sample_application();
         exam.students = (1..=15)
             .map(|n| Student {
-                id: 200000 + n as u32,
+                id: 30_000_000 + n as u32,
                 number: n,
                 name: format!("Aluno de Teste Número {n} da Silva"),
                 class: if n % 2 == 0 { "B" } else { "A" }.to_string(),

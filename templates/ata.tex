@@ -14,13 +14,25 @@
 \usepackage{lastpage}
 \usepackage{titlesec}
 \usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage{needspace}
+
+% ---------- Paleta ----------
+% Um preto levemente suavizado para títulos (menos duro que o preto puro) e
+% dois cinzas para linhas/campos, para reduzir o peso visual das bordas sem
+% comprometer a legibilidade em impressão P&B.
+\definecolor{ink}{RGB}{38,38,38}
+\definecolor{hairline}{RGB}{140,140,140}
+\definecolor{fieldline}{RGB}{110,110,110}
 
 \titleformat{\section}  % which section command to format
-  {\fontsize{12}{12}\bfseries} % format for whole line
+  {\color{ink}\fontsize{12}{12}\bfseries} % format for whole line
   {\thesection} % how to show number
   {1em} % space between number and text
   {} % formatting for just the text
-  [] % formatting for after the text
+  [{\color{hairline}\titlerule[0.5pt]}] % thin rule under the whole heading
+\titlespacing*{\section}{0pt}{1.4em}{0.6em}
 
 \setlength{\parindent}{0pt}
 \renewcommand{\arraystretch}{1.4}
@@ -28,18 +40,18 @@
 % ---------- Campos de preenchimento ----------
 
 \newcommand{\digitbox}{
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}
 }
 
 \newcommand{\twodigits}{
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}\null
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}
 }
 
 \newcommand{\threedigits}{
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}\null
-    \fbox{\rule{0pt}{2.2ex}\hspace{0.7em}}
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}\null
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}\null
+    {\color{fieldline}\fbox{\color{black}\rule{0pt}{2.2ex}\hspace{0.7em}}}
 }
 
 \newcommand{\timefield}{
@@ -51,27 +63,36 @@
 }
 
 \newcommand{\dotted}[1]{
-    \makebox[#1]{\dotfill}
+    \color{fieldline}\makebox[#1]{\dotfill}\color{black}
 }
 
 % Linha numerada para anotação livre (usada em "Ocorrências").
 \newcommand{\notedline}[1]{
-    \noindent{\bfseries #1.}\ \rule[-0.1cm]{0.9\textwidth}{0.4pt}\par
+    \noindent{\color{ink}\bfseries #1.}\ {\color{fieldline}\rule[-0.1cm]{0.9\textwidth}{0.4pt}}\par
     \vspace{0.9cm}
 }
 
+% Chamada lateral (usada nas instruções de "Registro de Presença") — uma
+% barra fina à esquerda em vez de uma caixa fechada, para um visual mais leve.
+\renewcommand{\FrameCommand}{ {\color{fieldline}\vrule width 1.6pt}\hspace{10pt}}
+\setlength{\OuterFrameSep}{0pt}
+\setlength{\FrameSep}{4pt}
+
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\textbf{ATA DE APLICAÇÃO DE PROVA}}
-\fancyhead[R]{UFRGS}
-\fancyfoot[L]{\small Gerado em {{ generated_at }}}
-\fancyfoot[R]{Folha \thepage \ de \pageref{LastPage}}
-\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\color{ink}\textbf{ATA DE APLICAÇÃO DE PROVA}}
+\fancyhead[R]{\color{ink}UFRGS}
+\fancyfoot[L]{\small\color{ink} Gerado em {{ generated_at }}}
+\fancyfoot[R]{\color{ink}Folha \thepage \ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{ {\color{hairline}\hrule width\headwidth height\headrulewidth}}
+\renewcommand{\footrule}{ {\color{hairline}\hrule width\headwidth height\footrulewidth}}
 
 \begin{document}
 
 \begin{center}
-    {\Large\bfseries Aplicação de Prova}
+    {\Large\bfseries\color{ink} Aplicação de Prova}
 \end{center}
 
 % ====================================================
@@ -132,14 +153,14 @@
 
 \section*{Registro de Presença}
 
-\noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
-    \small
-    Marque somente os alunos presentes com \textbf{P} e os ausentes com \textbf{A} na
-    coluna de presença no início da aplicação. Os alunos que chegarem após o início da
-    aplicação devem ser marcados com \textbf{T} (tarde).
-    \par\smallskip
-    Os alunos devem assinar na coluna de assinatura no ato da devolução da prova.
-}}
+\begin{leftbar}
+\small
+Marque somente os alunos presentes com \textbf{P} e os ausentes com \textbf{A} na
+coluna de presença no início da aplicação. Os alunos que chegarem após o início da
+aplicação devem ser marcados com \textbf{T} (tarde).
+\par\smallskip
+Os alunos devem assinar na coluna de assinatura no ato da devolução da prova.
+\end{leftbar}
 
 \medskip
 
@@ -150,14 +171,14 @@
 \midrule
 \endfirsthead
 
-\multicolumn{ {{ exam.features.observation_span() + 1 }} }{l}{\small\textit{(continuação da lista de presença)}} \\[0.3em]
+\multicolumn{ {{ exam.features.columns_after_number() + 1 }} }{l}{\small\textit{(continuação da lista de presença)}} \\[0.3em]
 \toprule
 \textbf{Nº} & \textbf{Matrícula} & \textbf{Nome}{% if exam.features.show_class_column %} & \textbf{Turma}{% endif %} & \textbf{Presença} & \textbf{Assinatura}{% if exam.features.show_delivery_time_column %} & \textbf{Entrega}{% endif %} \\
 \midrule
 \endhead
 
 \midrule
-\multicolumn{ {{ exam.features.observation_span() + 1 }} }{r}{\small\textit{continua na próxima página\ldots}} \\
+\multicolumn{ {{ exam.features.columns_after_number() + 1 }} }{r}{\small\textit{continua na próxima página\ldots}} \\
 \endfoot
 
 \bottomrule
@@ -169,6 +190,9 @@
 {{ student.id }}
 &
 {{ student.name }}
+{%- if student.observations.is_some() %}
+\newline{\footnotesize\textit{Obs.: {{ student.observations.as_ref().unwrap() }}}}
+{%- endif %}
 {% if exam.features.show_class_column %}
 &
 {{ student.class }}
@@ -180,13 +204,6 @@ $\digitbox$
 {% if exam.features.show_delivery_time_column %}
 &
 \dotted{\linewidth}
-{% endif %}
-{% if student.observations.is_some() %}
-\\[0.1em]
-&
-\multicolumn{ {{ exam.features.observation_span() }} }{p{14cm}}{
-    \small\textit{Observações: {{ student.observations.as_ref().unwrap() }}}
-}
 {% endif %}
 \\[0.3em]
 {% endfor %}
@@ -286,6 +303,11 @@ quando aplicável.}
 % ====================================================
 % ENCERRAMENTO
 % ====================================================
+
+% O bloco de encerramento tem altura fixa (não cresce com o número de
+% alunos), então evitamos que ele seja partido ao meio por uma quebra de
+% página — se não couber inteiro, ele inteiro vai para a próxima página.
+\needspace{9cm}
 
 \section*{Encerramento}
 
